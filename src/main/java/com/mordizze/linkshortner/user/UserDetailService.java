@@ -1,13 +1,14 @@
-package com.mordizze.linkshortner.security;
+package com.mordizze.linkshortner.user;
 
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
 
 
 
-
+@Service
 public class UserDetailService implements UserDetailsService {
 
     private final UserRepo userRepo;
@@ -19,7 +20,7 @@ public class UserDetailService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        UserDetails user = userRepo.findById(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        CustomUser user = userRepo.findById(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         return User.withUsername(user.getUsername()).password(user.getPassword()).build();
     }
