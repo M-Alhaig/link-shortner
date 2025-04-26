@@ -1,4 +1,4 @@
-package com.mordizze.linkshortner.link_shortner;
+package com.mordizze.linkshortner;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
