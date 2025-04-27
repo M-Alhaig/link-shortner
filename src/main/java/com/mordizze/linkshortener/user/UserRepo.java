@@ -1,4 +1,4 @@
-package com.mordizze.linkshortner.user;
+package com.mordizze.linkshortener.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

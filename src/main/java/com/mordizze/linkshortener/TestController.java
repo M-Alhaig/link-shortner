@@ -1,4 +1,4 @@
-package com.mordizze.linkshortner;
+package com.mordizze.linkshortener;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

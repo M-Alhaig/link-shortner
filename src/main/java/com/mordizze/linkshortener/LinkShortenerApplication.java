@@ -1,14 +1,14 @@
-package com.mordizze.linkshortner;
+package com.mordizze.linkshortener;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class LinkShortnerApplication {
+public class LinkShortenerApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(LinkShortnerApplication.class, args);
-		System.out.println("Link Shortner Application is running");
+		SpringApplication.run(LinkShortenerApplication.class, args);
+		System.out.println("Link Shortener Application is running");
 	}
 
 }

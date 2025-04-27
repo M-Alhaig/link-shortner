@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.mordizze.linkshortner</groupId>
-	<artifactId>link-shortner</artifactId>
+	<artifactId>link-shortener</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>link-shortner</name>
 	<description>Demo project for Spring Boot</description>

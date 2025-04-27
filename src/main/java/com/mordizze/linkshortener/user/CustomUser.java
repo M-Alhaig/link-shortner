@@ -1,4 +1,4 @@
-package com.mordizze.linkshortner.user;
+package com.mordizze.linkshortener.user;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
