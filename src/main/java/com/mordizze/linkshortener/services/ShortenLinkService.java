@@ -1,7 +1,10 @@
 package com.mordizze.linkshortener.services;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.SecureRandom;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -9,32 +12,57 @@ import com.mordizze.linkshortener.Command;
 import com.mordizze.linkshortener.Link;
 import com.mordizze.linkshortener.LinkRepo;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class ShortenLinkService implements Command<String, String> {
 
+    @Value("${app.base-url}")
+    private String BASE_URL;
+    
     private final int SHORT_CODE_LENGTH = 8;
     private final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_@";
     private final LinkRepo linkRepo;
 
     @Override
     public ResponseEntity<String> execute(String input) {
-        String shortCode = generateShortCode(input);
+        try {
+            // Validate and normalize the URL
+            String normalizedUrl = normalizeUrl(input);
+            log.info("Normalized URL: {}", normalizedUrl);
+            String shortCode = generateShortCode(normalizedUrl);
 
-        while (linkRepo.findById(shortCode).isPresent()) {
-            shortCode = generateShortCode(input);
+            while (linkRepo.findById(shortCode).isPresent()) {
+                shortCode = generateShortCode(normalizedUrl);
+            }
+            log.info("Short code: {}", shortCode);
+
+            Link link = new Link();
+            link.setShortCode(shortCode);
+            link.setOriginalUrl(normalizedUrl);
+            link.setClickCount(0);
+            linkRepo.save(link);
+            log.info("Link saved: {}", link);
+            return ResponseEntity.ok(BASE_URL + "/" + shortCode);
+        } catch (URISyntaxException e) {
+            log.error("Invalid URL format: {}", input);
+            throw new RuntimeException("Invalid URL format: " + input, e);
+        }
+    }
+
+    private String normalizeUrl(String url) throws URISyntaxException {
+        // Add http:// if no protocol is specified
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            log.info("Adding https:// to the URL: {}", url);
+            url = "https://" + url;
         }
         
-        Link link = new Link();
-        link.setShortCode(shortCode);
-        link.setOriginalUrl(input);
-        link.setClickCount(0);
-        linkRepo.save(link);
-        return ResponseEntity.ok(shortCode);
+        // Create and normalize the URI
+        URI uri = new URI(url);
+        return uri.normalize().toString();
     }
 
     private String generateShortCode(String originalUrl) {
