@@ -9,8 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.mordizze.linkshortener.Command;
-import com.mordizze.linkshortener.Link;
 import com.mordizze.linkshortener.LinkRepo;
+import com.mordizze.linkshortener.models.Link;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +35,7 @@ public class ShortenLinkService implements Command<String, String> {
             log.info("Normalized URL: {}", normalizedUrl);
             String shortCode = generateShortCode(normalizedUrl);
 
-            while (linkRepo.findById(shortCode).isPresent()) {
+            while (linkRepo.findByShortCode(shortCode).isPresent()) {
                 shortCode = generateShortCode(normalizedUrl);
             }
             log.info("Short code: {}", shortCode);

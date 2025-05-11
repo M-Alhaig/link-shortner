@@ -7,15 +7,21 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mordizze.linkshortener.models.RedirectRequest;
 import com.mordizze.linkshortener.services.RedirectRequestService;
 import com.mordizze.linkshortener.services.ShortenLinkService;
 
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @AllArgsConstructor
+@Slf4j
 public class LinkController {
 
     private final ShortenLinkService shortenLinkService;
@@ -27,7 +33,8 @@ public class LinkController {
     }
 
     @GetMapping("/{short_code}")
-    public ResponseEntity<URI> redirectToOriginalUrl(@PathVariable String short_code) {
-        return redirectRequestService.execute(short_code);
+    public ResponseEntity<URI> redirectToOriginalUrl(@PathVariable String short_code,
+                                                    HttpServletRequest request) {
+        return redirectRequestService.execute(new RedirectRequest(short_code, request));
     }
 }
