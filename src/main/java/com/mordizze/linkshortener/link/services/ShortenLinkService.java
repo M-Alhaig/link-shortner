@@ -1,16 +1,15 @@
-package com.mordizze.linkshortener.services;
+package com.mordizze.linkshortener.link.services;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.SecureRandom;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.mordizze.linkshortener.Command;
-import com.mordizze.linkshortener.LinkRepo;
-import com.mordizze.linkshortener.models.Link;
+import com.mordizze.linkshortener.link.LinkRepo;
+import com.mordizze.linkshortener.link.models.Link;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +27,7 @@ public class ShortenLinkService implements Command<String, String> {
     private final LinkRepo linkRepo;
 
     @Override
-    public ResponseEntity<String> execute(String input) {
+    public String execute(String input) {
         try {
             // Validate and normalize the URL
             String normalizedUrl = normalizeUrl(input);
@@ -46,7 +45,7 @@ public class ShortenLinkService implements Command<String, String> {
             link.setClickCount(0);
             linkRepo.save(link);
             log.info("Link saved: {}", link);
-            return ResponseEntity.ok(BASE_URL + "/" + shortCode);
+            return (BASE_URL + "/" + shortCode);
         } catch (URISyntaxException e) {
             log.error("Invalid URL format: {}", input);
             throw new RuntimeException("Invalid URL format: " + input, e);

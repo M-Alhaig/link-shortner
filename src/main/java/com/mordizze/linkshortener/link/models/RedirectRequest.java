@@ -1,4 +1,4 @@
-package com.mordizze.linkshortener.models;
+package com.mordizze.linkshortener.link.models;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;

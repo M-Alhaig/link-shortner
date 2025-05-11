@@ -45,7 +45,7 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/shorten", "/{short_code}").permitAll()
+                    .requestMatchers("/shorten", "/{short_code}/**").permitAll()
                     .anyRequest().authenticated()
                 )
                 .formLogin(form -> form.disable())

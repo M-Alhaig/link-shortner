@@ -1,6 +1,6 @@
-package com.mordizze.linkshortener.models;
+package com.mordizze.linkshortener.link.models;
 
-import java.sql.Date;
+
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -14,15 +14,18 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Entity
 @Table(name = "click_events")
+@NoArgsConstructor
 public class ClickEvents {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
 
     @ManyToOne
     @JoinColumn(name = "link_id", nullable = false)
@@ -62,3 +65,4 @@ public class ClickEvents {
     }
 
 }
+

@@ -1,8 +1,8 @@
-package com.mordizze.linkshortener.services;
+package com.mordizze.linkshortener.link.services;
 
 import org.springframework.stereotype.Service;
 
-import com.mordizze.linkshortener.models.ParsedUserAgent;
+import com.mordizze.linkshortener.link.models.ParsedUserAgent;
 
 import lombok.extern.slf4j.Slf4j;
 import ua_parser.Client;
@@ -31,6 +31,9 @@ public class UserAgentService {
     }
     
     private String safe(String value) {
-        return value != null && !value.isBlank() ? value : "Unknown";
+        if (value == null || value.isBlank() || value.equalsIgnoreCase("Other")) {
+            return "Unknown";
+        }
+        return value;
     }
 }

@@ -1,4 +1,4 @@
-package com.mordizze.linkshortener.models;
+package com.mordizze.linkshortener.link.models;
 
 import java.time.LocalDateTime;
 

@@ -1,20 +1,17 @@
-package com.mordizze.linkshortener.services;
+package com.mordizze.linkshortener.link.services;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Optional;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.mordizze.linkshortener.ClickEventsRepo;
 import com.mordizze.linkshortener.Command;
-import com.mordizze.linkshortener.LinkRepo;
-import com.mordizze.linkshortener.models.ClickEvents;
-import com.mordizze.linkshortener.models.Link;
-import com.mordizze.linkshortener.models.ParsedUserAgent;
-import com.mordizze.linkshortener.models.RedirectRequest;
+import com.mordizze.linkshortener.link.LinkRepo;
+import com.mordizze.linkshortener.link.models.ClickEvents;
+import com.mordizze.linkshortener.link.models.Link;
+import com.mordizze.linkshortener.link.models.ParsedUserAgent;
+import com.mordizze.linkshortener.link.models.RedirectRequest;
+import com.mordizze.linkshortener.stats.ClickEventsRepo;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
@@ -32,7 +29,7 @@ public class RedirectRequestService implements Command<RedirectRequest, URI> {
     private final UserAgentService userAgentService;
 
     @Override
-    public ResponseEntity<URI> execute(RedirectRequest redirectRequest) {
+    public URI execute(RedirectRequest redirectRequest) {
         Optional<Link> link = linkRepo.findByShortCode(redirectRequest.getShortCode());
         if (link.isPresent()) {
             log.info("Redirecting to: {}", link.get().getOriginalUrl());
@@ -63,9 +60,9 @@ public class RedirectRequestService implements Command<RedirectRequest, URI> {
             linkRepo.save(link.get());
             URI uri = URI.create(link.get().getOriginalUrl());
 
-            return ResponseEntity.status(HttpStatus.FOUND).location(uri).build();
+            return uri;
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        return null;
     }
 
 }
