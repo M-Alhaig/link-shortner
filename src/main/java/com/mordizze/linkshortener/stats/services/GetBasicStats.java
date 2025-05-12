@@ -4,8 +4,11 @@ package com.mordizze.linkshortener.stats.services;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
+import java.time.temporal.WeekFields;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -19,7 +22,9 @@ import com.mordizze.linkshortener.link.models.Link;
 import com.mordizze.linkshortener.stats.ClickEventsRepo;
 import com.mordizze.linkshortener.stats.models.BasicStatsRequest;
 import com.mordizze.linkshortener.stats.models.BasicStatsResponse;
-import com.mordizze.linkshortener.stats.models.Interval;
+import com.mordizze.linkshortener.stats.models.CityClicks;
+import com.mordizze.linkshortener.stats.models.CountryClicks;
+import com.mordizze.linkshortener.stats.models.DeviceClicks;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,18 +44,22 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
     public BasicStatsResponse execute(BasicStatsRequest input) {
         // TODO Auto-generated method stub
         String shortCode = input.getShortCode();
-        Interval interval = Interval.fromString(input.getInterval());
-
+        String interval = input.getInterval();
 
         Link link = linkRepo.findByShortCode(shortCode).orElseThrow(() -> new RuntimeException());
-        String[] topCountries = getTop3Countries();
-        String[] topCities = getTop3Cities();
-        Map<String, Long> devices = getDevices();
+        List<CountryClicks> topCountries = getTop3Countries();
+        List<CityClicks> topCities = getTop3Cities();
+        List<DeviceClicks> devices = getDevices();
         
-        Map<String, Long> clicksOverTime = switch (interval) {
-            case DAILY -> getClicksOverDailyInterval();
-            case WEEKLY -> getClicksOverWeeklyInterval();
-        };
+        Map<String, Map<String, Long>> clicksOverTime = new HashMap<>();
+    
+        if (interval.equalsIgnoreCase("daily")) {
+            clicksOverTime.put("daily", getClicksOverDailyInterval());
+        } else if (interval.equalsIgnoreCase("weekly")) {
+            clicksOverTime.put("weekly", getClicksOverWeeklyInterval());
+        } else {
+            throw new IllegalArgumentException("Unsupported interval: " + interval);
+        }
 
         List<ClickEvents> events = clickEventsRepo.findByLink(link);
 
@@ -61,42 +70,45 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
         return response;
     }
 
-    private String[] getTop3Countries() {
+    private List<CountryClicks> getTop3Countries() {
         List<Object[]> countries = clickEventsRepo.findDistinctCountriesSortedDesc();
         int len = countries.size();
         if (len > 3)
             len = 3;
-        String[] topCountries = new String[len];
+
+        List<CountryClicks> countryClicks = new ArrayList<>(len);
         for (int i = 0; i < len; i++) {
-            topCountries[i] = (String) countries.get(i)[0];
+            String country = (String) countries.get(i)[0];
+            long count = (long) countries.get(i)[1];
+            countryClicks.add(new CountryClicks(country, count));
         }
-        return topCountries;
+        return countryClicks;
     }
 
-    private String[] getTop3Cities() {
+    private List<CityClicks> getTop3Cities() {
         List<Object[]> cities = clickEventsRepo.findDistinctCitiesSortedDesc();
         int len = cities.size();
         if (len > 3)
             len = 3;
 
-        String[] topCities = new String[len];
+        List<CityClicks> cityClicks = new ArrayList<>(len);
         for (int i = 0; i < len; i++) {
-            topCities[i] = (String) cities.get(i)[0];
+            String city = (String) cities.get(i)[0];
+            long count = (long) cities.get(i)[1];
+            cityClicks.add(new CityClicks(city, count));
         }
-        return topCities;
+        return cityClicks;
     }
 
-    private Map<String, Long> getDevices() {
+    private List<DeviceClicks> getDevices() {
         List<Object[]> devices = clickEventsRepo.findDistinctDeviceCount();
 
-        Map<String, Long> deviceCount = new HashMap<>();
+        List<DeviceClicks> deviceCount = new ArrayList<>(devices.size());
         for (Object[] arr : devices) {
             String device = (String) arr[0];
             long count = (long) arr[1];
-
-            deviceCount.put(device, count);
+            deviceCount.add(new DeviceClicks(device, count));    
         }
-
         return deviceCount;
     }
 
@@ -104,13 +116,13 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
         LocalDateTime now = LocalDateTime.now().minusWeeks(WEEKLY_INTERVAL);
         List<ClickEvents> events = clickEventsRepo.findByClickedAtAfter(now);
 
-
+        WeekFields weekFields = WeekFields.of(Locale.getDefault());
         Map<String, Long> clicksOverTime = new TreeMap<>();
 
         for (int i = 0; i < WEEKLY_INTERVAL; i++) {
             LocalDate date = LocalDate.now().minusWeeks(i);
             int year = date.getYear();
-            int week = date.get(ChronoField.ALIGNED_WEEK_OF_YEAR);
+            int week = date.get(weekFields.weekOfWeekBasedYear());
             String yearWeek = String.format("%d-W%02d", year, week);
 
             clicksOverTime.put(yearWeek, 0L);
