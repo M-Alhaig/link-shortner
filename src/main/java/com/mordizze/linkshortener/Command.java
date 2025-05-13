@@ -1,7 +1,6 @@
 package com.mordizze.linkshortener;
 
-import org.springframework.http.ResponseEntity;
 
 public interface Command<I, O> {
-    ResponseEntity<O> execute(I input);
+    O execute(I input);
 }
