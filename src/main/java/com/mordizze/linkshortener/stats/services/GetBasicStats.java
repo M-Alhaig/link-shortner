@@ -25,6 +25,7 @@ import com.mordizze.linkshortener.stats.models.BasicStatsResponse;
 import com.mordizze.linkshortener.stats.models.CityClicks;
 import com.mordizze.linkshortener.stats.models.CountryClicks;
 import com.mordizze.linkshortener.stats.models.DeviceClicks;
+import com.mordizze.linkshortener.stats.models.ReferrerClicks;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,7 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
         List<CountryClicks> topCountries = getTop3Countries();
         List<CityClicks> topCities = getTop3Cities();
         List<DeviceClicks> devices = getDevices();
+        List<ReferrerClicks> topReferrers = getTopReferrers();
         
         Map<String, Map<String, Long>> clicksOverTime = new HashMap<>();
     
@@ -66,7 +68,14 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
         log.info("**************************************************");
         log.info(events.get(0).toString());
 
-        BasicStatsResponse response = new BasicStatsResponse(shortCode, link.getClickCount(), clicksOverTime, topCountries, topCities, devices);
+        BasicStatsResponse response = new BasicStatsResponse(shortCode,
+                                                            link.getClickCount(),
+                                                            link.getCreatedAt(),
+                                                            clicksOverTime,
+                                                            topCountries,
+                                                            topCities,
+                                                            topReferrers,
+                                                            devices);
         return response;
     }
 
@@ -186,6 +195,23 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
         // }
 
         return clicksOverTime;
+    }
+
+    public List<ReferrerClicks> getTopReferrers() {
+        List<Object[]> referrers = clickEventsRepo.findDistnctReferrersCount();
+
+        int len = referrers.size();
+        if (len > 3)
+            len = 3;
+
+        List<ReferrerClicks> topReferrers = new ArrayList<>(len);
+        for (int i = 0; i < len; i++) {
+            String referrer = (String) referrers.get(i)[0];
+            long count = (long) referrers.get(i)[1];
+
+            topReferrers.add(new ReferrerClicks(referrer, count));
+        }
+        return topReferrers;
     }
 
 }
