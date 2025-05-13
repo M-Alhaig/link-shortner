@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import com.mordizze.linkshortener.Command;
@@ -48,10 +49,10 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
         String interval = input.getInterval();
 
         Link link = linkRepo.findByShortCode(shortCode).orElseThrow(() -> new RuntimeException());
-        List<CountryClicks> topCountries = getTop3Countries();
-        List<CityClicks> topCities = getTop3Cities();
-        List<DeviceClicks> devices = getDevices();
-        List<ReferrerClicks> topReferrers = getTopReferrers();
+        List<CountryClicks> topCountries = clickEventsRepo.findTopCountries(PageRequest.of(0, 3));
+        List<CityClicks> topCities = clickEventsRepo.findTopCities(PageRequest.of(0, 3));
+        List<DeviceClicks> devices = clickEventsRepo.findTopDevices(PageRequest.of(0, 3));
+        List<ReferrerClicks> topReferrers = clickEventsRepo.findTopReferrers(PageRequest.of(0, 3));
         
         Map<String, Map<String, Long>> clicksOverTime = new HashMap<>();
     
@@ -79,47 +80,43 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
         return response;
     }
 
-    private List<CountryClicks> getTop3Countries() {
-        List<Object[]> countries = clickEventsRepo.findDistinctCountriesSortedDesc();
-        int len = countries.size();
-        if (len > 3)
-            len = 3;
+    // private List<CountryClicks> getTop3Countries() {
+    //     List<Object[]> countries = clickEventsRepo.findTopCountries(PageRequest.of(0, 3));
+    //     int len = countries.size();
 
-        List<CountryClicks> countryClicks = new ArrayList<>(len);
-        for (int i = 0; i < len; i++) {
-            String country = (String) countries.get(i)[0];
-            long count = (long) countries.get(i)[1];
-            countryClicks.add(new CountryClicks(country, count));
-        }
-        return countryClicks;
-    }
+    //     List<CountryClicks> countryClicks = new ArrayList<>(len);
+    //     for (int i = 0; i < len; i++) {
+    //         String country = (String) countries.get(i)[0];
+    //         long count = (long) countries.get(i)[1];
+    //         countryClicks.add(new CountryClicks(country, count));
+    //     }
+    //     return countryClicks;
+    // }
 
-    private List<CityClicks> getTop3Cities() {
-        List<Object[]> cities = clickEventsRepo.findDistinctCitiesSortedDesc();
-        int len = cities.size();
-        if (len > 3)
-            len = 3;
+    // private List<CityClicks> getTop3Cities() {
+    //     List<Object[]> cities = clickEventsRepo.findTopCities(PageRequest.of(0, 3));
+    //     int len = cities.size();
 
-        List<CityClicks> cityClicks = new ArrayList<>(len);
-        for (int i = 0; i < len; i++) {
-            String city = (String) cities.get(i)[0];
-            long count = (long) cities.get(i)[1];
-            cityClicks.add(new CityClicks(city, count));
-        }
-        return cityClicks;
-    }
+    //     List<CityClicks> cityClicks = new ArrayList<>(len);
+    //     for (int i = 0; i < len; i++) {
+    //         String city = (String) cities.get(i)[0];
+    //         long count = (long) cities.get(i)[1];
+    //         cityClicks.add(new CityClicks(city, count));
+    //     }
+    //     return cityClicks;
+    // }
 
-    private List<DeviceClicks> getDevices() {
-        List<Object[]> devices = clickEventsRepo.findDistinctDeviceCount();
+    // private List<DeviceClicks> getDevices() {
+    //     List<Object[]> devices = clickEventsRepo.findTopDevices(PageRequest.of(0, 3));
 
-        List<DeviceClicks> deviceCount = new ArrayList<>(devices.size());
-        for (Object[] arr : devices) {
-            String device = (String) arr[0];
-            long count = (long) arr[1];
-            deviceCount.add(new DeviceClicks(device, count));    
-        }
-        return deviceCount;
-    }
+    //     List<DeviceClicks> deviceCount = new ArrayList<>(devices.size());
+    //     for (Object[] arr : devices) {
+    //         String device = (String) arr[0];
+    //         long count = (long) arr[1];
+    //         deviceCount.add(new DeviceClicks(device, count));    
+    //     }
+    //     return deviceCount;
+    // }
 
     private Map<String, Long> getClicksOverWeeklyInterval() {
         LocalDateTime now = LocalDateTime.now().minusWeeks(WEEKLY_INTERVAL);
@@ -197,21 +194,19 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
         return clicksOverTime;
     }
 
-    public List<ReferrerClicks> getTopReferrers() {
-        List<Object[]> referrers = clickEventsRepo.findDistnctReferrersCount();
+    // public List<ReferrerClicks> getTopReferrers() {
+    //     List<Object[]> referrers = clickEventsRepo.findTopReferrers(PageRequest.of(0, 3));
 
-        int len = referrers.size();
-        if (len > 3)
-            len = 3;
+    //     int len = referrers.size();
 
-        List<ReferrerClicks> topReferrers = new ArrayList<>(len);
-        for (int i = 0; i < len; i++) {
-            String referrer = (String) referrers.get(i)[0];
-            long count = (long) referrers.get(i)[1];
+    //     List<ReferrerClicks> topReferrers = new ArrayList<>(len);
+    //     for (int i = 0; i < len; i++) {
+    //         String referrer = (String) referrers.get(i)[0];
+    //         long count = (long) referrers.get(i)[1];
 
-            topReferrers.add(new ReferrerClicks(referrer, count));
-        }
-        return topReferrers;
-    }
+    //         topReferrers.add(new ReferrerClicks(referrer, count));
+    //     }
+    //     return topReferrers;
+    // }
 
 }
