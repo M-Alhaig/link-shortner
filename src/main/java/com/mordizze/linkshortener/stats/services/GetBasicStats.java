@@ -46,6 +46,8 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
     @Override
     public BasicStatsResponse execute(BasicStatsRequest input) {
 
+        
+
         String shortCode = input.getShortCode();
         String interval = input.getInterval();
 
@@ -56,6 +58,7 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
         List<CityClicks> topCities = clickEventsRepo.findTopCities(pageable, link);
         List<DeviceClicks> devices = clickEventsRepo.findTopDevices(pageable, link);
         List<ReferrerClicks> topReferrers = clickEventsRepo.findTopReferrers(pageable, link);
+
         
         Map<String, Map<String, Long>> clicksOverTime = new HashMap<>();
     

@@ -1,4 +1,4 @@
-package com.mordizze.linkshortener;
+package com.mordizze.linkshortener.configs;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
