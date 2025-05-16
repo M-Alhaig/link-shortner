@@ -1,6 +1,7 @@
 package com.mordizze.linkshortener.link.models;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -32,4 +33,6 @@ public class Link {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    private Set<String> returningUsers;
 }

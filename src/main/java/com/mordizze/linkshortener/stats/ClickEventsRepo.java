@@ -22,29 +22,31 @@ public interface ClickEventsRepo extends JpaRepository<ClickEvents, Long> {
 
     @Query("""
         SELECT new com.mordizze.linkshortener.stats.models.CountryClicks(c.country, COUNT(*))
-         FROM ClickEvents c WHERE c.country IS NOT NULL GROUP BY c.country ORDER BY COUNT(*) DESC
+         FROM ClickEvents c WHERE c.country IS NOT NULL AND c.link = :link GROUP BY c.country ORDER BY COUNT(*) DESC
         """)
-    List<CountryClicks> findTopCountries(Pageable pageable);
+    List<CountryClicks> findTopCountries(Pageable pageable, Link link);
 
     @Query("""
         SELECT new com.mordizze.linkshortener.stats.models.CityClicks(c.city, COUNT(*))
-         FROM ClickEvents c WHERE c.city IS NOT NULL GROUP BY c.city ORDER BY COUNT(*) DESC
+         FROM ClickEvents c WHERE c.city IS NOT NULL AND c.link = :link GROUP BY c.city ORDER BY COUNT(*) DESC
          """)
-    List<CityClicks> findTopCities(Pageable pageable);
+    List<CityClicks> findTopCities(Pageable pageable, Link link);
 
     @Query("""
         SELECT new com.mordizze.linkshortener.stats.models.DeviceClicks(c.device, COUNT(*))
-         FROM ClickEvents c WHERE c.device IS NOT NULL GROUP BY c.device ORDER BY COUNT(*) DESC
+         FROM ClickEvents c WHERE c.device IS NOT NULL AND c.link = :link GROUP BY c.device ORDER BY COUNT(*) DESC
          """)
-    List<DeviceClicks> findTopDevices(Pageable pageable);
+    List<DeviceClicks> findTopDevices(Pageable pageable, Link link);
 
     @Query("""
         SELECT new com.mordizze.linkshortener.stats.models.ReferrerClicks(c.referrer, COUNT(*))
-         FROM ClickEvents c WHERE c.referrer IS NOT NULL GROUP BY c.referrer ORDER BY COUNT(*) DESC
+         FROM ClickEvents c WHERE c.referrer IS NOT NULL AND c.link = :link GROUP BY c.referrer ORDER BY COUNT(*) DESC
          """)
-    List<ReferrerClicks> findTopReferrers(Pageable pageable);
+    List<ReferrerClicks> findTopReferrers(Pageable pageable, Link link);
 
-    List<ClickEvents> findByClickedAtAfter(LocalDateTime clickedAt);
+    List<ClickEvents> findByClickedAtAfterAndLink(LocalDateTime clickedAt, Link link);
 
     List<ClickEvents> findByLink(Link link);
+
+    boolean existsByLinkAndIpAddress(Link link, String ipAddress);
 }

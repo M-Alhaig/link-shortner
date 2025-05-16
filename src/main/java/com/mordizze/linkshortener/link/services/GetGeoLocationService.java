@@ -39,7 +39,10 @@ public class GetGeoLocationService {
         try {
             InetAddress ipAddress = InetAddress.getByName(ipString);
             CountryResponse response = databaseReader.country(ipAddress);
-            return response.getCountry().getName();
+            String country = response.getCountry().getName();
+            if (country == null)
+                country = "Unknown";
+            return country;
         } catch (IOException | GeoIp2Exception e) {
             log.error("Error reading Max Mind city Database with ip {}", ipString);
             return "Unknown";
@@ -50,7 +53,10 @@ public class GetGeoLocationService {
         try {
             InetAddress ipAddress = InetAddress.getByName(ipString);
             CityResponse response = databaseReader.city(ipAddress);
-            return response.getCity().getName();
+            String city = response.getCity().getName();
+            if (city == null)
+                city = "Unknown";
+            return city;
         } catch (Exception e) {
             log.error("Error reading Max Mind city Database with ip {}", ipString);
             return "Unknown";
