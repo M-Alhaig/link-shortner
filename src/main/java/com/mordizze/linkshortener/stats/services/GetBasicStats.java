@@ -126,7 +126,7 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
 
     private Map<String, Long> getClicksOverWeeklyInterval(Link link) {
         LocalDateTime now = LocalDateTime.now().minusWeeks(WEEKLY_INTERVAL);
-        List<ClickEvents> events = clickEventsRepo.findByClickedAtAfterAndLink(now, link);
+        List<ClickEvents> events = clickEventsRepo.findByClickedAtAfterAndLinkOrderByClickedAt(now, link);
 
         WeekFields weekFields = WeekFields.of(Locale.getDefault());
         Map<String, Long> clicksOverTime = new TreeMap<>();
@@ -164,7 +164,7 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
 
     private Map<String, Long> getClicksOverDailyInterval(Link link) {
         LocalDateTime now = LocalDateTime.now().minusDays(DAILY_INTERVAL);
-        List<ClickEvents> events = clickEventsRepo.findByClickedAtAfterAndLink(now, link);
+        List<ClickEvents> events = clickEventsRepo.findByClickedAtAfterAndLinkOrderByClickedAt(now, link);
         Map<String, Long> clicksOverTime = new TreeMap<>();
 
         for (int i = 0; i < DAILY_INTERVAL; i++) {

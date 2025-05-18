@@ -3,8 +3,11 @@ package com.mordizze.linkshortener.stats;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mordizze.linkshortener.stats.models.AdvancedStatsRequest;
+import com.mordizze.linkshortener.stats.models.AdvancedStatsResponse;
 import com.mordizze.linkshortener.stats.models.BasicStatsRequest;
 import com.mordizze.linkshortener.stats.models.BasicStatsResponse;
+import com.mordizze.linkshortener.stats.services.GetAdvancedStats;
 import com.mordizze.linkshortener.stats.services.GetBasicStats;
 
 import lombok.AllArgsConstructor;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class StatsController {
 
     private final GetBasicStats getBasicStats;
+    private final GetAdvancedStats getAdvancedStats;
 
     @GetMapping
     public ResponseEntity<BasicStatsResponse> getBasicStats(@PathVariable String shortCode, 
@@ -28,6 +32,13 @@ public class StatsController {
         BasicStatsResponse response = getBasicStats.execute(new BasicStatsRequest(shortCode, interval));
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/advanced")
+    public ResponseEntity<AdvancedStatsResponse> getMethodName(@PathVariable String shortCode) {
+        AdvancedStatsResponse response = getAdvancedStats.execute(new AdvancedStatsRequest(shortCode));
+        return ResponseEntity.ok(response);
+    }
+    
     
 
 }

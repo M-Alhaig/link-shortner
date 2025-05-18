@@ -8,4 +8,6 @@ import lombok.Data;
 public class AdvancedStatsResponse {
     private String shortCode;
     private int returningUsersCount;
+    private AverageTimeBetweenClicks averageTimeBetweenClicks;
+    private ClickDistributionResponse clickDistributionResponse;
 }

@@ -44,7 +44,8 @@ public interface ClickEventsRepo extends JpaRepository<ClickEvents, Long> {
          """)
     List<ReferrerClicks> findTopReferrers(Pageable pageable, Link link);
 
-    List<ClickEvents> findByClickedAtAfterAndLink(LocalDateTime clickedAt, Link link);
+    List<ClickEvents> findByClickedAtAfterAndLinkOrderByClickedAt(LocalDateTime clickedAt, Link link);
+    List<ClickEvents> findByClickedAtAfterOrderByClickedAtAsc(LocalDateTime clickedAt);
 
     List<ClickEvents> findByLink(Link link);
 
