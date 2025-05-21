@@ -43,6 +43,7 @@ public class ShortenLinkService implements Command<String, String> {
             link.setShortCode(shortCode);
             link.setOriginalUrl(normalizedUrl);
             link.setClickCount(0);
+            link.setReturningUsers(new java.util.HashSet<>());
             linkRepo.save(link);
             log.info("Link saved: {}", link);
             return (BASE_URL + "/" + shortCode);

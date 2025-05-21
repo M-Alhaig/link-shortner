@@ -33,6 +33,10 @@ public class AverageTimeBetweenClicksService {
                                                          .stream()
                                                          .map(ClickEvents::getClickedAt).toList();
 
+        if (clickEvents.isEmpty()) {
+            log.error("No Click Events Found for Short Code {}", link.getShortCode());
+            throw new IllegalStateException("No Click Events Found for Short Code " + link.getShortCode());
+        }
 
         long sum = 0;
         for (int i = 1; i < clickEvents.size(); i++){
@@ -42,7 +46,7 @@ public class AverageTimeBetweenClicksService {
             sum += difference.getSeconds();
         }
 
-        double avg = sum / clickEvents.size();
+        double avg = (double) sum / clickEvents.size();
 
         if (avg > 60) {
             avg /= 60;
