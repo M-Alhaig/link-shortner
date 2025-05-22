@@ -1,14 +1,13 @@
-# Use an official OpenJDK runtime as a parent image
-FROM openjdk:21-jdk
-
-# Set the working directory inside the container
+# First stage: build the JAR using Maven
+FROM maven:3.9.4-eclipse-temurin-21 AS build
 WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Copy the built jar file into the container
-COPY target/link-shortener-0.0.1-SNAPSHOT.jar app.jar
-
-# Expose the port your app listens on (adjust if needed)
+# Second stage: run the app with OpenJDK
+FROM openjdk:21-jdk
+WORKDIR /app
+COPY --from=build /app/target/link-shortener-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
-
-# Command to run the jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
