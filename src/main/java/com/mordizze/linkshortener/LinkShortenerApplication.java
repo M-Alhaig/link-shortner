@@ -8,7 +8,7 @@ public class LinkShortenerApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(LinkShortenerApplication.class, args);
-		System.out.println("Link Shortener Application is running");
+		System.out.println("Link Shortener Application is running!");
 	}
 
 }
