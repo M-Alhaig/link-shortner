@@ -1,14 +1,11 @@
 package com.mordizze.linkshortener.link.services;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.InetAddress;
+import java.net.URL;
 
-import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import com.maxmind.geoip2.DatabaseReader;
@@ -22,53 +19,77 @@ import jakarta.servlet.http.HttpServletRequest;
 @Slf4j
 public class GetGeoLocationService {
 
-    private DatabaseReader databaseReader;
-    private final String cityDbPath;
-    private boolean initialized = false;
-    private final Object initLock = new Object();
+    private final DatabaseReader databaseReader;
 
-    public GetGeoLocationService(@Value("${max-mind-city-db}") String cityDbPath) {
-        this.cityDbPath = cityDbPath;
-        log.info("GetGeoLocationService created with DB path: {}", cityDbPath);
-        // Don't initialize here - do it lazily on first use
+    public GetGeoLocationService(@Value("${max-mind-city-db}") String downloadUrl) throws IOException {
+        log.info("Initializing GeoIP database from S3 URL: {}", downloadUrl);
+
+        try {
+            // Download the file from S3
+            File dbFile = downloadGeoLiteDatabase(downloadUrl);
+
+            // Initialize the DatabaseReader with the downloaded file
+            databaseReader = new DatabaseReader.Builder(dbFile).build();
+
+            // Clean up the temp file after DatabaseReader is created
+            dbFile.deleteOnExit();
+
+            log.info("GeoIP database reader initialized successfully from S3");
+
+        } catch (IOException e) {
+            log.error("Error initializing GeoIP database reader from S3: {}", downloadUrl, e);
+            throw new IOException("Failed to initialize GeoIP database from S3: " + e.getMessage(), e);
+        }
     }
 
-    private void initializeIfNeeded() throws IOException {
-        if (!initialized) {
-            synchronized (initLock) {
-                if (!initialized) {
-                    log.info("Lazy loading GeoIP database from: {}", cityDbPath);
+    private File downloadGeoLiteDatabase(String downloadUrl) throws IOException {
+        log.info("Downloading GeoLite2 database from S3...");
 
-                    InputStream dbStream = this.getClass().getClassLoader().getResourceAsStream(cityDbPath);
-                    if (dbStream == null) {
-                        // Try alternative loading methods
-                        dbStream = this.getClass().getResourceAsStream("/" + cityDbPath);
-                    }
+        URL url = new URL(downloadUrl);
+        File tempFile = File.createTempFile("geolite2-city", ".mmdb");
 
-                    if (dbStream == null) {
-                        ClassPathResource resource = new ClassPathResource(cityDbPath);
-                        if (resource.exists()) {
-                            dbStream = resource.getInputStream();
-                        }
-                    }
+        try (InputStream in = url.openStream();
+             BufferedInputStream bufferedIn = new BufferedInputStream(in, 64 * 1024);
+             FileOutputStream out = new FileOutputStream(tempFile);
+             BufferedOutputStream bufferedOut = new BufferedOutputStream(out, 64 * 1024)) {
 
-                    if (dbStream == null) {
-                        throw new IOException("GeoIP database not found at path: " + cityDbPath);
-                    }
+            byte[] buffer = new byte[64 * 1024]; // 64KB buffer for better performance
+            int bytesRead;
+            long totalBytes = 0;
+            long startTime = System.currentTimeMillis();
 
-                    try (BufferedInputStream bufferedStream = new BufferedInputStream(dbStream, 64 * 1024)) {
-                        databaseReader = new DatabaseReader.Builder(bufferedStream).build();
-                        initialized = true;
-                        log.info("GeoIP database reader initialized successfully");
-                    }
+            while ((bytesRead = bufferedIn.read(buffer)) != -1) {
+                bufferedOut.write(buffer, 0, bytesRead);
+                totalBytes += bytesRead;
+
+                // Log progress every 10MB
+                if (totalBytes % (10 * 1024 * 1024) == 0) {
+                    long elapsed = System.currentTimeMillis() - startTime;
+                    double speed = (totalBytes / 1024.0 / 1024.0) / (elapsed / 1000.0);
+                    log.info("Downloaded {} MB ({} MB/s)", totalBytes / (1024 * 1024), speed);
                 }
             }
+
+            long elapsed = System.currentTimeMillis() - startTime;
+            double totalMB = totalBytes / (1024.0 * 1024.0);
+            double avgSpeed = totalMB / (elapsed / 1000.0);
+
+            log.info("Successfully downloaded GeoLite2 database: {} MB in {}s (avg {} MB/s)",
+                    totalMB, elapsed / 1000.0, avgSpeed);
+
+        } catch (IOException e) {
+            // Clean up temp file if download failed
+            if (tempFile.exists()) {
+                tempFile.delete();
+            }
+            throw new IOException("Failed to download GeoLite2 database from S3: " + e.getMessage(), e);
         }
+
+        return tempFile;
     }
 
     public String getCountry(String ipString) {
         try {
-            initializeIfNeeded();
             InetAddress ipAddress = InetAddress.getByName(ipString);
             CountryResponse response = databaseReader.country(ipAddress);
             String country = response.getCountry().getName();
@@ -83,7 +104,6 @@ public class GetGeoLocationService {
 
     public String getCity(String ipString) {
         try {
-            initializeIfNeeded();
             InetAddress ipAddress = InetAddress.getByName(ipString);
             CityResponse response = databaseReader.city(ipAddress);
             String city = response.getCity().getName();
@@ -108,18 +128,6 @@ public class GetGeoLocationService {
             return "Unknown";
         }
         return ipAddress;
-    }
-
-    @PreDestroy
-    public void cleanup() {
-        if (databaseReader != null) {
-            try {
-                databaseReader.close();
-                log.info("GeoIP database reader closed");
-            } catch (IOException e) {
-                log.warn("Error closing GeoIP database reader", e);
-            }
-        }
     }
     
 
