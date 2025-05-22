@@ -25,6 +25,7 @@ public class GetGeoLocationService {
         try (InputStream dbStram = this.getClass().getClassLoader().getResourceAsStream(cityDbPath)) {
             log.info("DB path is: "+cityDbPath);
             if (dbStram == null){
+                log.info("GeoIP database not found");
                 throw new IOException("GeoIP database not found");
             }
             databaseReader = new DatabaseReader.Builder(dbStram).build();
