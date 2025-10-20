@@ -387,15 +387,3 @@ services:
 volumes:
   postgres_data:
 ```
-
-## License
-
-[Add your license information here]
-
-## Contributing
-
-[Add contribution guidelines here]
-
-## Support
-
-For issues and questions, please create an issue in the repository.
