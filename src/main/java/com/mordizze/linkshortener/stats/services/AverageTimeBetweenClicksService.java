@@ -61,7 +61,7 @@ public class AverageTimeBetweenClicksService {
         Cache cache = cacheManager.getCache(CACHE);
         if (cache != null) {
             cache.put(link.getShortCode(), averageTimeBetweenClicks);
-            log.info("AverageTimeBetweenClicks Successfully Caculated For Short Code {}", link.getShortCode());
+            log.info("AverageTimeBetweenClicks Successfully Calculated For Short Code {}", link.getShortCode());
         } else {
             log.error("Cache {} Not Found", CACHE);
             throw new IllegalStateException("Error Putting Values in Cache "+CACHE);
