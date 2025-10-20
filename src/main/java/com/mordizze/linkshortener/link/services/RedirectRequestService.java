@@ -1,7 +1,9 @@
 package com.mordizze.linkshortener.link.services;
 
 import java.net.URI;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -30,9 +32,10 @@ public class RedirectRequestService implements Command<RedirectRequest, URI> {
 
     @Override
     public URI execute(RedirectRequest redirectRequest) {
-        Optional<Link> link = linkRepo.findByShortCode(redirectRequest.getShortCode());
-        if (link.isPresent()) {
-            log.info("Redirecting to: {}", link.get().getOriginalUrl());
+        Optional<Link> linkOptional = linkRepo.findByShortCode(redirectRequest.getShortCode());
+        if (linkOptional.isPresent()) {
+            Link link = linkOptional.get();
+            log.info("Redirecting to: {}", link.getOriginalUrl());
             HttpServletRequest request = redirectRequest.getRequest();
 
             // collect info from headers for storage
@@ -40,25 +43,31 @@ public class RedirectRequestService implements Command<RedirectRequest, URI> {
             String referrer = request.getHeader("Referer");
             String userAgent = request.getHeader("User-Agent");
 
-            log.info("Click came from: {}", referrer);
+            if (referrer == null)
+                referrer = "Unknown";
 
             // collect location and user agent info for storage
             String city = getGeoLocationService.getCity(ipString);
             String country = getGeoLocationService.getCountry(ipString);
             ParsedUserAgent parsedUserAgent = userAgentService.parseUserAgent(userAgent);
 
-            log.info("User agent info: {}", parsedUserAgent.toString());
-            log.info("Country where the click came from: {}", country); 
-            log.info("City where the click came from: {}", city);
+            link.setClickCount(link.getClickCount() + 1);
 
-            link.get().setClickCount(link.get().getClickCount() + 1);
-            ClickEvents clicked = new ClickEvents(link.get(), referrer, ipString, parsedUserAgent, country, city);
+            ClickEvents clicked = new ClickEvents(link, referrer, ipString, parsedUserAgent, country, city);
 
             log.info(clicked.toString());
 
+            if (clickEventsRepo.existsByLinkAndIpAddress(link, ipString)) {
+                Set<String> returningUsers = link.getReturningUsers();
+                if (returningUsers == null)
+                    returningUsers = new HashSet<>();
+                returningUsers.add(ipString);
+                link.setReturningUsers(returningUsers);
+            }
+
             clickEventsRepo.save(clicked);
-            linkRepo.save(link.get());
-            URI uri = URI.create(link.get().getOriginalUrl());
+            linkRepo.save(link);
+            URI uri = URI.create(link.getOriginalUrl());
 
             return uri;
         }

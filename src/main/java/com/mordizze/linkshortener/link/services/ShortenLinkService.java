@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ShortenLinkService implements Command<String, String> {
 
-    @Value("${app.base-url}")
+    @Value("${app.base.url}")
     private String BASE_URL;
     
     private final int SHORT_CODE_LENGTH = 8;
@@ -43,6 +43,7 @@ public class ShortenLinkService implements Command<String, String> {
             link.setShortCode(shortCode);
             link.setOriginalUrl(normalizedUrl);
             link.setClickCount(0);
+            link.setReturningUsers(new java.util.HashSet<>());
             linkRepo.save(link);
             log.info("Link saved: {}", link);
             return (BASE_URL + "/" + shortCode);

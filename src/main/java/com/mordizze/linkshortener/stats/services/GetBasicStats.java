@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.WeekFields;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -14,6 +13,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.mordizze.linkshortener.Command;
@@ -38,28 +38,34 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
 
     private final int DAILY_INTERVAL = 7;
     private final int WEEKLY_INTERVAL = 4;
+    private final int NUM_TOP_PICKS = 3;
 
     private final ClickEventsRepo clickEventsRepo;
     private final LinkRepo linkRepo;
 
     @Override
     public BasicStatsResponse execute(BasicStatsRequest input) {
-        // TODO Auto-generated method stub
+
+        
+
         String shortCode = input.getShortCode();
         String interval = input.getInterval();
 
-        Link link = linkRepo.findByShortCode(shortCode).orElseThrow(() -> new RuntimeException());
-        List<CountryClicks> topCountries = clickEventsRepo.findTopCountries(PageRequest.of(0, 3));
-        List<CityClicks> topCities = clickEventsRepo.findTopCities(PageRequest.of(0, 3));
-        List<DeviceClicks> devices = clickEventsRepo.findTopDevices(PageRequest.of(0, 3));
-        List<ReferrerClicks> topReferrers = clickEventsRepo.findTopReferrers(PageRequest.of(0, 3));
+        Link link = linkRepo.findByShortCode(shortCode).orElseThrow(() -> new RuntimeException("Invalid Short Code"));
+
+        Pageable pageable = PageRequest.of(0, NUM_TOP_PICKS);
+        List<CountryClicks> topCountries = clickEventsRepo.findTopCountries(pageable, link);
+        List<CityClicks> topCities = clickEventsRepo.findTopCities(pageable, link);
+        List<DeviceClicks> devices = clickEventsRepo.findTopDevices(pageable, link);
+        List<ReferrerClicks> topReferrers = clickEventsRepo.findTopReferrers(pageable, link);
+
         
         Map<String, Map<String, Long>> clicksOverTime = new HashMap<>();
     
         if (interval.equalsIgnoreCase("daily")) {
-            clicksOverTime.put("daily", getClicksOverDailyInterval());
+            clicksOverTime.put("daily", getClicksOverDailyInterval(link));
         } else if (interval.equalsIgnoreCase("weekly")) {
-            clicksOverTime.put("weekly", getClicksOverWeeklyInterval());
+            clicksOverTime.put("weekly", getClicksOverWeeklyInterval(link));
         } else {
             throw new IllegalArgumentException("Unsupported interval: " + interval);
         }
@@ -118,9 +124,9 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
     //     return deviceCount;
     // }
 
-    private Map<String, Long> getClicksOverWeeklyInterval() {
+    private Map<String, Long> getClicksOverWeeklyInterval(Link link) {
         LocalDateTime now = LocalDateTime.now().minusWeeks(WEEKLY_INTERVAL);
-        List<ClickEvents> events = clickEventsRepo.findByClickedAtAfter(now);
+        List<ClickEvents> events = clickEventsRepo.findByClickedAtAfterAndLinkOrderByClickedAt(now, link);
 
         WeekFields weekFields = WeekFields.of(Locale.getDefault());
         Map<String, Long> clicksOverTime = new TreeMap<>();
@@ -156,9 +162,9 @@ public class GetBasicStats implements Command<BasicStatsRequest, BasicStatsRespo
         return clicksOverTime;
     }
 
-    private Map<String, Long> getClicksOverDailyInterval() {
+    private Map<String, Long> getClicksOverDailyInterval(Link link) {
         LocalDateTime now = LocalDateTime.now().minusDays(DAILY_INTERVAL);
-        List<ClickEvents> events = clickEventsRepo.findByClickedAtAfter(now);
+        List<ClickEvents> events = clickEventsRepo.findByClickedAtAfterAndLinkOrderByClickedAt(now, link);
         Map<String, Long> clicksOverTime = new TreeMap<>();
 
         for (int i = 0; i < DAILY_INTERVAL; i++) {
